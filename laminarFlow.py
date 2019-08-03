@@ -29,14 +29,15 @@ def meshGeneration(caseData):
     caseData.outlet.mark(caseData.boundaries, caseData.outletLabel)
     caseData.wall.mark(caseData.boundaries, caseData.wallLabel)
 
-    caseData.velocity = VectorFunctionSpace(caseData.mesh, 'CG', 2)
-    caseData.pressure = FunctionSpace(caseData.mesh, 'CG', 1)
-
     v_elem = VectorElement("CG", caseData.mesh.ufl_cell(), 1, 2)
+    v0_elem = FiniteElement("CG", caseData.mesh.ufl_cell(), 1)
     p_elem = FiniteElement("CG", caseData.mesh.ufl_cell(), 1)
-    caseData.MixedSpace = FunctionSpace(caseData.mesh, MixedElement([v_elem, p_elem]))
+    l_elem = FiniteElement("CG", caseData.mesh.ufl_cell(), 1)
 
-    caseData.bc_wall = DirichletBC(caseData.MixedSpace.sub(caseData.velocity).sub(1), Constant(0.0), caseData.boundaries, 3)
+    caseData.MixedSpace = FunctionSpace(caseData.mesh, MixedElement([v_elem, p_elem, l_elem]))
+
+    caseData.bc_wall = DirichletBC(caseData.MixedSpace.sub(v_elem).sub(1), Constant(0.0), caseData.boundaries, caseData.wallLabel)
+    caseData.bc_lagrange = DirichletBC(caseData.MixedSpace.sub(l_elem), Constant(0.0), "fabs(x[0])>2.0*DOLFIN_EPS")
 
 if __name__=="__main__":
     laminarJet = caseData()
