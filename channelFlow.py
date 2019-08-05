@@ -10,6 +10,7 @@ Incremental Pressure Correction Scheme (IPCS).
 from __future__ import print_function
 import numpy as np
 from fenics import *
+from fenics_adjoint import *
 
 T = 10.0           # final time
 num_steps = 500    # number of time steps
