@@ -26,18 +26,23 @@ def meshGenerate(caseData):
 channelFlow = caseData()
 meshGenerate(channelFlow)
 
-P = FiniteElement('P', interval, 1)
-element = MixedElement([P, P, P])
-V = FunctionSpace(channelFlow.mesh, element)
+V = FunctionSpace(channelFlow.mesh, 'P', 1)
 
-u_test, k_test, w_test = TestFunctions(V)
+u_test = TestFunctions(V)
+k_test = TestFunctions(V)
+w_test = TestFunctions(V)
 
-U_ = Function(V)
-U = Function(V)
-u_, k_, w_ = split(U_)
-u, k, w = split(U)
+u = TrialFunction(V)
+k = TrialFunction(V)
+w = TrialFunction(V)
 
-U_ = project(Expression(("0.0", "0.0", "1e5"), degree = 1), V)
+# u_ = Function(V)
+# k_ = Function(V)
+# w_ = Function(V)
+
+u_ = project(Constant("0.0"), V)
+k_ = project(Constant("0.0"), V)
+w_ = project(Constant("1e5"), V)
 
 gradP = Constant(channelFlow.frictionVelocity**2)
 
@@ -50,10 +55,21 @@ gamma = Constant(channelFlow.gamma)
 
 relax = 0.1
 
-F = (mu + k_/w_)*dot(grad(u), grad(u_test))*dx - gradP*u_test*dx \
-    + (k_/w_)*dot(dot(grad(u_), grad(u_)), k_test)*dx - betaStar*k_*w_*k_test*dx + (mu + sigmaStar*k_/w_)*dot(grad(k), grad(k_test))*dx \
-    + gamma*dot(dot(grad(u_), grad(u_)), w_test)*dx - beta*k_*w_*w_test*dx + (mu + sigma*k_/w_)*dot(grad(w), grad(w_test))*dx
+F = (mu + k_/w_)*grad(u)*grad(u_test)*dx - gradP*u_test*dx 
+    #+ (k_/w_)*dot(dot(grad(u_), grad(u_)), k_test)*dx - betaStar*k_*w_*k_test*dx + (mu + sigmaStar*k_/w_)*dot(grad(k), grad(k_test))*dx \
+    #+ gamma*dot(dot(grad(u_), grad(u_)), w_test)*dx - beta*k_*w_*w_test*dx + (mu + sigma*k_/w_)*dot(grad(w), grad(w_test))*dx
 
-bc = DirichletBC(V, (0.0, 0.0, 2.354e14), "on_boundary")
+bc_u = DirichletBC(V, Constant(0.0), "on_boundary")
+bc_k = DirichletBC(V, Constant(0.0), "on_boundary")
+bc_w = DirichletBC(V, Constant(2.35e14), "on_boundary")
 
-solve(F == 0, U, bc)
+a = lhs(F)
+L = rhs(F)
+
+A = assemble(a)
+b = assemble(L)
+
+bc_u.apply(A)
+bc_u.apply(b)
+
+solve(A, u_.vector(), b)

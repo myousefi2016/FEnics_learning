@@ -98,7 +98,7 @@ if __name__=='__main__':
     t0 = time()
     problem_parameters['max_iter'] = 100
     problem.solve()
-    print 'time = ', time()-t0
-    print list_timings()
+    print('time = ', time()-t0)
+    print(list_timings())
     plot(NS_solver.u_)
 
